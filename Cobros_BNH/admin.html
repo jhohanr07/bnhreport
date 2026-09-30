@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<base target="_top">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Administrativo · BNH Medical</title>
+<script src="gas-shim.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js';"></script>
+<style>
+   :root{
+    --bg:#060c18;
+    --bg-deep:#03060e;
+    --panel:#0c1830;
+    --panel-2:#101f3d;
+    --border:rgba(120,190,255,.14);
+    --border-hi:rgba(120,190,255,.32);
+    --cyan:#2ad4ff;
+    --cyan-soft:#7fe8ff;
+    --blue:#3d6bff;
+    --green:#34e6a8;
+    --amber:#ffb648;
+    --violet:#8b7bff;
+    --text:#eaf3fb;
+    --text-dim:#8296b3;
+    --text-faint:#4d5e78;
+    --radius:16px;
+    --font-display:'Space Grotesk', sans-serif;
+    --font-body:'Inter', sans-serif;
+    --font-mono:'JetBrains Mono', monospace;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; }
+  body{
+    margin:0; background:var(--bg); color:var(--text); font-family:var(--font-body);
+    background-image:
+      radial-gradient(1100px 520px at 12% -10%, rgba(61,107,255,.20), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(42,212,255,.14), transparent 55%),
+      linear-gradient(var(--bg), var(--bg-deep));
+    min-height:100%;
+  }
+  ::selection{ background:rgba(42,212,255,.3); color:#fff; }
+  ::-webkit-scrollbar{ width:10px; height:10px; }
+  ::-webkit-scrollbar-thumb{ background:#16274a; border-radius:8px; }
+  ::-webkit-scrollbar-track{ background:transparent; }
+  a{ color:inherit; }
+ 
+  .bg-grid{
+    position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background-image:
+      linear-gradient(rgba(120,190,255,.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(120,190,255,.05) 1px, transparent 1px);
+    background-size:42px 42px;
+    mask-image:radial-gradient(1000px 700px at 50% 0%, #000 20%, transparent 75%);
+  }
+ 
+  /* ================= LOGIN GATE ================= */
+  #gate{
+    position:fixed; inset:0; z-index:50; display:flex; align-items:center; justify-content:center; padding:20px;
+    background:
+      radial-gradient(900px 500px at 20% 15%, rgba(61,107,255,.30), transparent 60%),
+      radial-gradient(700px 500px at 85% 85%, rgba(42,212,255,.22), transparent 55%),
+      var(--bg-deep);
+  }
+  #gate .box{
+    position:relative; width:100%; max-width:360px; text-align:center; padding:40px 32px 32px;
+    background:linear-gradient(180deg, rgba(16,31,61,.9), rgba(9,17,34,.9));
+    border:1px solid var(--border-hi); border-radius:20px;
+    box-shadow:0 30px 80px -25px rgba(0,0,0,.7), 0 0 0 1px rgba(42,212,255,.04) inset;
+    backdrop-filter:blur(6px);
+  }
+  #gate .box::before{
+    content:''; position:absolute; inset:-1px; border-radius:20px; padding:1px;
+    background:linear-gradient(135deg, rgba(42,212,255,.5), transparent 40%, transparent 60%, rgba(61,107,255,.5));
+    -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor; mask-composite:exclude; pointer-events:none;
+  }
+  .logo-mark{
+    width:auto; height:auto; margin:0 auto 18px; padding:14px 20px; border-radius:16px; display:inline-flex; align-items:center; justify-content:center;
+    background:#ffffff; box-shadow:0 0 0 1px rgba(255,255,255,.08), 0 12px 30px -8px rgba(42,212,255,.55);
+  }
+  .logo-mark svg{ display:block; height:46px; width:auto; }
+  #gate h2{ font-family:var(--font-display); font-size:18px; margin:0 0 6px; font-weight:600; color:#fff; }
+  #gate p{ font-size:12.5px; color:var(--text-dim); margin:0 0 22px; line-height:1.5; }
+  #gate input{
+    width:100%; padding:13px 14px; border:1px solid var(--border); border-radius:11px; margin-bottom:12px;
+    background:rgba(255,255,255,.03); color:var(--text); font-size:14px; font-family:var(--font-mono); letter-spacing:.05em;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  #gate input::placeholder{ color:var(--text-faint); font-family:var(--font-body); letter-spacing:normal; }
+  #gate input:focus{ outline:none; border-color:var(--cyan); box-shadow:0 0 0 3px rgba(42,212,255,.15); }
+  #gate button{
+    width:100%; padding:13px; border:none; border-radius:11px; cursor:pointer; margin-top:2px;
+    background:linear-gradient(135deg, var(--blue), var(--cyan)); color:#04101f;
+    font-family:var(--font-display); font-weight:700; font-size:14px; letter-spacing:.01em;
+    box-shadow:0 10px 24px -8px rgba(42,212,255,.5);
+    transition:transform .12s, box-shadow .12s;
+  }
+  #gate button:hover{ transform:translateY(-1px); box-shadow:0 14px 30px -8px rgba(42,212,255,.65); }
+  #gate button:active{ transform:translateY(0); }
+  #gate .err{ color:#ff6b7a; font-size:12px; margin-top:12px; display:none; font-weight:500; }
+ 
+  /* ================= APP SHELL ================= */
+  #app{ display:none; position:relative; z-index:1; }
+ 
+  header{
+    position:sticky; top:0; z-index:10; padding:18px 32px; display:flex; align-items:center; justify-content:space-between;
+    flex-wrap:wrap; gap:14px;
+    background:rgba(6,12,24,.72); backdrop-filter:blur(14px); border-bottom:1px solid var(--border);
+  }
+  header .left{ display:flex; align-items:center; gap:14px; }
+  header .mark{
+    width:auto; height:40px; padding:0 12px; border-radius:11px; display:flex; align-items:center; justify-content:center;
+    background:#ffffff; box-shadow:0 0 24px -4px rgba(42,212,255,.55);
+  }
+  header .mark svg{ display:block; height:26px; width:auto; }
+  header h1{ font-family:var(--font-display); font-size:16.5px; margin:0; font-weight:600; color:#fff; display:flex; align-items:center; gap:9px; }
+  .live-dot{ width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 0 3px rgba(52,230,168,.18); animation:pulse 2s ease-in-out infinite; }
+  @keyframes pulse{ 0%,100%{ opacity:1; } 50%{ opacity:.35; } }
+  header .sub{ font-size:11.5px; color:var(--text-dim); margin:2px 0 0; }
+  header .refresh{
+    background:rgba(120,190,255,.08); color:var(--cyan-soft); border:1px solid var(--border-hi);
+    border-radius:10px; padding:9px 16px; font-size:12.5px; font-weight:600; cursor:pointer; display:flex; gap:8px; align-items:center;
+    font-family:var(--font-body); transition:background .15s, border-color .15s;
+  }
+  header .refresh:hover{ background:rgba(42,212,255,.14); border-color:var(--cyan); }
+  header .refresh svg{ width:14px; height:14px; }
+ 
+  main{ max-width:1320px; margin:0 auto; padding:26px 32px 70px; }
+ 
+  /* ---- filters ---- */
+  .filters{
+    background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:18px 20px;
+    display:flex; flex-wrap:wrap; gap:16px; align-items:flex-end; margin-bottom:22px;
+  }
+  .filters .f{ display:flex; flex-direction:column; gap:6px; }
+  .filters label{ font-size:10.5px; font-weight:700; color:var(--text-faint); text-transform:uppercase; letter-spacing:.07em; font-family:var(--font-mono); }
+  .filters input, .filters select{
+    padding:10px 13px; border:1px solid var(--border); border-radius:9px; font-size:13.5px; font-family:var(--font-body);
+    min-width:160px; background:rgba(255,255,255,.03); color:var(--text); color-scheme:dark;
+  }
+  .filters input:focus, .filters select:focus{ outline:none; border-color:var(--cyan); box-shadow:0 0 0 3px rgba(42,212,255,.12); }
+  
+  /* Fondo oscuro del panel para las opciones de los selects */
+  .filters select option {
+    background-color: var(--panel);
+    color: var(--text);
+  }
+
+  .filters .clear{
+    background:none; border:1px solid var(--border); color:var(--text-dim); border-radius:9px; padding:10px 16px;
+    font-size:12.5px; font-weight:600; cursor:pointer; font-family:var(--font-body); transition:border-color .15s, color .15s;
+  }
+  .filters .clear:hover{ border-color:var(--border-hi); color:var(--text); }
+ 
+  /* ---- kpis ---- */
+  .kpis{ display:grid; grid-template-columns:repeat(auto-fit, minmax(196px,1fr)); gap:14px; margin-bottom:22px; }
+  .kpi{
+    background:linear-gradient(160deg, var(--panel-2), var(--panel)); border:1px solid var(--border); border-radius:var(--radius);
+    padding:18px 20px; position:relative; overflow:hidden;
+  }
+  .kpi::before{ content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--accent); box-shadow:0 0 16px var(--accent); }
+  .kpi::after{
+    content:''; position:absolute; right:-10px; bottom:-16px; width:90px; height:60px; opacity:.5; pointer-events:none;
+    background:
+      linear-gradient(90deg, transparent 0 8%, var(--accent) 8% 14%, transparent 14% 22%,
+        var(--accent) 22% 30%, transparent 30% 40%, var(--accent) 40% 48%, transparent 48% 58%,
+        var(--accent) 58% 66%, transparent 66% 76%, var(--accent) 76% 84%, transparent 84% 100%);
+    -webkit-mask:linear-gradient(180deg, transparent, #000 55%);
+    mask:linear-gradient(180deg, transparent, #000 55%);
+    filter:blur(.3px);
+  }
+  .kpi .label{ font-size:10.5px; color:var(--text-dim); font-weight:700; text-transform:uppercase; letter-spacing:.07em; font-family:var(--font-mono); }
+  .kpi .value{ font-family:var(--font-display); font-size:24px; font-weight:700; color:#fff; margin-top:8px; }
+  .kpi .count{ font-size:11.5px; color:var(--text-faint); margin-top:3px; }
+  .kpi .conv{ font-family:var(--font-display); font-size:15px; font-weight:700; color:var(--green); margin-top:6px; position:relative; z-index:1; }
+  .kpi .conv small{ display:block; font-family:var(--font-body); font-size:10.5px; font-weight:500; color:var(--text-faint); margin-top:2px; }
+  .kpi.bs{ --accent:var(--blue); } .kpi.usd{ --accent:var(--green); }
+  .kpi.usdt{ --accent:var(--cyan); } .kpi.efectivo{ --accent:var(--amber); }
+  .kpi.total{ --accent:var(--violet); }
+  .kpi.inicial{ --accent:var(--blue); } .kpi.reserva{ --accent:var(--green); }
+  .kpi.iva{ --accent:var(--cyan); } .kpi.cuotaviva{ --accent:var(--amber); }
+ 
+  /* ---- charts ---- */
+  .grid2{ display:grid; grid-template-columns:1.3fr 1fr; gap:16px; margin-bottom:22px; }
+  @media (max-width:900px){ .grid2{ grid-template-columns:1fr; } }
+  .panel{ background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:20px 22px; }
+  .panel h3{ font-family:var(--font-display); font-size:14px; margin:0 0 16px; color:#fff; font-weight:600; display:flex; align-items:center; gap:8px; }
+  .panel h3::before{ content:''; width:6px; height:6px; border-radius:2px; background:var(--cyan); box-shadow:0 0 10px var(--cyan); display:inline-block; }
+  .panel .chart-box{ position:relative; height:260px; }
+  .panel canvas{ max-height:260px; }
+ 
+  /* ---- table ---- */
+  .table-wrap{ background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); overflow:auto; }
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  thead th{
+    text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--text-faint);
+    padding:13px 16px; border-bottom:1px solid var(--border); font-family:var(--font-mono); font-weight:600;
+    position:sticky; top:0; background:var(--panel);
+  }
+  tbody td{ padding:13px 16px; border-bottom:1px solid rgba(120,190,255,.06); color:var(--text); }
+  tbody td:nth-child(6){ font-family:var(--font-mono); }
+  tbody tr{ transition:background .12s; }
+  tbody tr:hover{ background:rgba(120,190,255,.045); }
+  .pill{ display:inline-block; padding:4px 11px; border-radius:999px; font-size:11px; font-weight:700; letter-spacing:.02em; }
+  .pill.Bs{ background:rgba(61,107,255,.15); color:#8fa9ff; }
+  .pill.USD{ background:rgba(52,230,168,.14); color:var(--green); }
+  .pill.USDT{ background:rgba(42,212,255,.14); color:var(--cyan-soft); }
+  .pill.Efectivo{ background:rgba(255,182,72,.14); color:var(--amber); }
+  .link{ color:var(--cyan-soft); font-weight:600; text-decoration:none; }
+  .link:hover{ text-decoration:underline; }
+  .empty{ text-align:center; padding:48px 0; color:var(--text-faint); font-size:13px; }
+  .loading{ text-align:center; padding:60px 0; color:var(--text-dim); font-size:13.5px; }
+  .spin{ width:26px; height:26px; border:3px solid rgba(42,212,255,.15); border-top-color:var(--cyan); border-radius:50%;
+    animation:sp .8s linear infinite; margin:0 auto 12px; }
+  @keyframes sp{ to{ transform:rotate(360deg); } }
+ 
+  footer{ text-align:center; color:var(--text-faint); font-size:11.5px; padding:26px 0 6px; }
+ 
+  @media (prefers-reduced-motion: reduce){
+    .live-dot, .spin{ animation:none; }
+  }
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+ 
+<!-- ============ LOGIN GATE ============ -->
+<div id="gate">
+  <div class="box">
+    <div class="logo-mark">
+      <svg viewBox="0 0 240 88" xmlns="http://www.w3.org/2000/svg">
+        <rect x="0" y="20" width="34" height="12" fill="#00BFA5" rx="2"/>
+        <rect x="11" y="9" width="12" height="34" fill="#00BFA5" rx="2"/>
+        <text x="42" y="40" fill="#00567C" font-family="Arial, sans-serif" font-size="40" font-weight="bold">BNH</text>
+        <text x="42" y="60" fill="#00567C" font-family="Arial, sans-serif" font-size="15" font-weight="bold" letter-spacing="0.5">MEDICAL</text>
+      </svg>
+    </div>
+    <h2>Acceso administrativo</h2>
+    <p>Ingresa la clave para ver el panel de pagos.</p>
+    <input type="password" id="gatePass" placeholder="Clave de acceso" onkeydown="if(event.key==='Enter')validarAcceso()">
+    <button onclick="validarAcceso()">Entrar al panel</button>
+    <p class="err" id="gateErr">Clave incorrecta. Intenta de nuevo.</p>
+  </div>
+</div>
+ 
+<!-- ============ APP SHELL ============ -->
+<div id="app">
+  <header>
+    <div class="left">
+      <div class="mark">
+        <svg viewBox="0 0 240 88" xmlns="http://www.w3.org/2000/svg">
+          <rect x="0" y="20" width="34" height="12" fill="#00BFA5" rx="2"/>
+          <rect x="11" y="9" width="12" height="34" fill="#00BFA5" rx="2"/>
+          <text x="42" y="40" fill="#00567C" font-family="Arial, sans-serif" font-size="40" font-weight="bold">BNH</text>
+          <text x="42" y="60" fill="#00567C" font-family="Arial, sans-serif" font-size="15" font-weight="bold" letter-spacing="0.5">MEDICAL</text>
+        </svg>
+      </div>
+      <div>
+        <h1>Panel de pagos <span class="live-dot" title="Datos en vivo"></span></h1>
+        <p class="sub">BNH Medical · Equipos &amp; Suministros</p>
+      </div>
+    </div>
+    <button class="refresh" onclick="cargarDatos()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>
+      Actualizar
+    </button>
+  </header>
+ 
+  <main>
+    <div class="filters">
+      <div class="f">
+        <label>Desde</label>
+        <input type="date" id="fDesde" onchange="aplicarFiltros()">
+      </div>
+      <div class="f">
+        <label>Hasta</label>
+        <input type="date" id="fHasta" onchange="aplicarFiltros()">
+      </div>
+      <div class="f">
+        <label>Método de pago</label>
+        <select id="fTipo" onchange="aplicarFiltros()">
+          <option value="">Todos</option>
+          <option value="Zelle">Zelle (USD)</option>
+          <option value="USD" data-moneda="USD">Transferencia (USD)</option>
+          <option value="Bs">Bs</option>
+          <option value="Binance">Binance (USDT)</option>
+          <option value="Efectivo">Efectivo</option>
+        </select>
+      </div>
+      <div class="f">
+        <label>Concepto de pago</label>
+        <select id="fConcepto" onchange="aplicarFiltros()">
+          <option value="">Todos</option>
+          <option value="Inicial">Inicial</option>
+          <option value="Reserva">Reserva</option>
+          <option value="Pago IVA">Pago IVA</option>
+          <option value="Cuota viva">Cuota viva</option>
+        </select>
+      </div>
+      
+      <div class="f">
+        <label>Empresa</label>
+        <select id="fEmpresa" onchange="aplicarFiltros()">
+          <option value="">Todas</option>
+        </select>
+      </div>
+      
+      <div class="f">
+        <label>Cliente</label>
+        <input type="text" id="fCliente" placeholder="Buscar por nombre..." oninput="aplicarFiltros()">
+      </div>
+      
+      <button class="clear" onclick="limpiarFiltros()">Limpiar filtros</button>
+    </div>
+ 
+    <div class="kpis" id="kpis">
+      <div class="kpi bs">
+        <div class="label">Bolívares</div>
+        <div class="value" id="kpiBs">Bs 0,00</div>
+        <div class="count" id="kpiBsCount">0 pagos</div>
+        <div class="conv" id="kpiBsUsd">≈ $0.00 USD<small>Monto ÷ Tasa Binance</small></div>
+      </div>
+      <div class="kpi usd"><div class="label">USD (Zelle / Transferencia)</div><div class="value" id="kpiUsd">$0.00</div><div class="count" id="kpiUsdCount">0 pagos</div></div>
+      <div class="kpi usdt"><div class="label">USDT (Binance)</div><div class="value" id="kpiUsdt">$0.00</div><div class="count" id="kpiUsdtCount">0 pagos</div></div>
+      <div class="kpi efectivo"><div class="label">Efectivo</div><div class="value" id="kpiEfectivo">$0.00</div><div class="count" id="kpiEfectivoCount">0 pagos</div></div>
+      <div class="kpi total"><div class="label">Total de pagos</div><div class="value" id="kpiTotal">0</div><div class="count">registrados</div></div>
+      <div class="kpi inicial"><div class="label">Inicial</div><div class="value" id="kpiInicial">0</div><div class="count" id="kpiInicialMonto">$0.00</div></div>
+      <div class="kpi reserva"><div class="label">Reserva</div><div class="value" id="kpiReserva">0</div><div class="count" id="kpiReservaMonto">$0.00</div></div>
+      <div class="kpi iva"><div class="label">Pago IVA</div><div class="value" id="kpiIva">0</div><div class="count" id="kpiIvaMonto">$0.00</div></div>
+      <div class="kpi cuotaviva"><div class="label">Cuota viva</div><div class="value" id="kpiCuotaViva">0</div><div class="count" id="kpiCuotaVivaMonto">$0.00</div></div>
+    </div>
+ 
+    <div class="grid2">
+      <div class="panel">
+        <h3>Pagos por fecha</h3>
+        <div class="chart-box"><canvas id="chartFecha"></canvas></div>
+      </div>
+      <div class="panel">
+        <h3>Distribución por moneda</h3>
+        <div class="chart-box"><canvas id="chartMoneda"></canvas></div>
+      </div>
+    </div>
+ 
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha</th><th>Empresa</th><th>Cliente</th><th>Titular</th><th>Moneda</th><th>Monto</th><th>Comprobante</th>
+          </tr>
+        </thead>
+        <tbody id="tablaBody">
+          <tr><td colspan="7" class="loading"><div class="spin"></div>Cargando pagos...</td></tr>
+        </tbody>
+      </table>
+    </div>
+ 
+    <footer>BNH Medical &middot; Panel de pagos interno</footer>
+  </main>
+</div>
+ 
+<script>
+  // La clave ya NO vive en el código: se valida en el servidor (Apps Script).
+  let pagosOriginal = [];
+  let chartFecha, chartMoneda;
+  
+  const chartColors = {
+    grid:'rgba(120,190,255,.08)', text:'#8296b3',
+    cyan:'#2ad4ff', blue:'#3d6bff', green:'#34e6a8', amber:'#ffb648'
+  };
+
+  function validarAcceso(){
+    const val = document.getElementById('gatePass').value.trim();
+    const err = document.getElementById('gateErr');
+    err.style.display = 'none';
+    sessionStorage.setItem('bnh_pin', val);
+
+    google.script.run
+      .withSuccessHandler(function(ok){
+        if(ok){
+          document.getElementById('gate').style.display = 'none';
+          document.getElementById('app').style.display = 'block';
+          cargarDatos();
+        } else {
+          sessionStorage.removeItem('bnh_pin');
+          err.textContent = 'Clave incorrecta. Intenta de nuevo.';
+          err.style.display = 'block';
+        }
+      })
+      .withFailureHandler(function(){
+        err.textContent = 'No se pudo conectar. Intenta de nuevo.';
+        err.style.display = 'block';
+      })
+      .validarPin(val);
+  }
+
+  function cargarDatos(){
+    document.getElementById('tablaBody').innerHTML =
+      '<tr><td colspan="7" class="loading"><div class="spin"></div>Cargando pagos...</td></tr>';
+
+    if (typeof google !== 'undefined' && google.script){
+      google.script.run
+        .withSuccessHandler(function(datos){ 
+           pagosOriginal = datos || []; 
+           poblarFiltroEmpresa();
+           aplicarFiltros(); 
+        })
+        .withFailureHandler(function(err){
+          document.getElementById('tablaBody').innerHTML =
+            '<tr><td colspan="7" class="empty">Error al cargar los pagos: ' + err + '</td></tr>';
+        })
+        .obtenerPagos();
+    } else {
+      pagosOriginal = datosEjemplo();
+      poblarFiltroEmpresa();
+      aplicarFiltros();
+    }
+  }
+
+  function poblarFiltroEmpresa() {
+    const select = document.getElementById('fEmpresa');
+    const valorActual = select.value; 
+    
+    select.innerHTML = '<option value="">Todas</option>';
+    
+    const empresas = [...new Set(pagosOriginal.map(p => p.empresa).filter(e => e && e.toString().trim() !== ''))];
+    empresas.sort();
+    
+    empresas.forEach(emp => {
+      const opt = document.createElement('option');
+      opt.value = emp;
+      opt.textContent = emp;
+      select.appendChild(opt);
+    });
+    
+    if (empresas.includes(valorActual)) {
+      select.value = valorActual;
+    }
+  }
+
+  function aplicarFiltros(){
+    const desde = document.getElementById('fDesde').value;
+    const hasta = document.getElementById('fHasta').value;
+    const tipo = document.getElementById('fTipo').value;
+    const concepto = document.getElementById('fConcepto').value;
+    const cliente = document.getElementById('fCliente').value.toLowerCase().trim();
+    const empresaFiltro = document.getElementById('fEmpresa').value;
+
+    let filtrados = pagosOriginal.filter(p => {
+      const fecha = p.fecha || p.fechaPago;
+      const nom = p.cliente || p.nombre || '';
+      const emp = p.empresa || ''; 
+      const tipoP = p.tipoPago || p.moneda;
+
+      if (desde && fecha < desde) return false;
+      if (hasta && fecha > hasta) return false;
+      if (tipo && tipoP !== tipo) return false;
+      if (concepto && p.conceptoPago !== concepto) return false;
+      if (cliente && !nom.toLowerCase().includes(cliente)) return false;
+      if (empresaFiltro && emp !== empresaFiltro) return false;
+      
+      return true;
+    });
+
+    renderKPIs(filtrados);
+    renderTabla(filtrados);
+    renderCharts(filtrados);
+  }
+
+  function limpiarFiltros(){
+    document.getElementById('fDesde').value = '';
+    document.getElementById('fHasta').value = '';
+    document.getElementById('fTipo').value = '';
+    document.getElementById('fConcepto').value = '';
+    document.getElementById('fCliente').value = '';
+    document.getElementById('fEmpresa').value = '';
+    aplicarFiltros();
+  }
+
+  function parseMonto(m){
+    if (typeof m === 'number') return m;
+    if (!m) return 0;
+    const limpio = String(m).replace(/[^0-9.,-]/g, '');
+    const normalizado = limpio.replace(/,/g, '');
+    const num = parseFloat(normalizado);
+    return isNaN(num) ? 0 : num;
+  }
+
+  // Tasa Binance (columna V de la hoja PAGOS). Acepta número o texto ("36,50" / "36.50")
+  function parseTasa(t){
+    if (typeof t === 'number') return t;
+    if (!t) return 0;
+    let s = String(t).replace(/[^0-9.,]/g, '');
+    if (s.indexOf(',') !== -1 && s.indexOf('.') !== -1){
+      // el último separador es el decimal
+      if (s.lastIndexOf(',') > s.lastIndexOf('.')) s = s.replace(/\./g, '').replace(',', '.');
+      else s = s.replace(/,/g, '');
+    } else if (s.indexOf(',') !== -1){
+      s = s.replace(',', '.');
+    }
+    const n = parseFloat(s);
+    return isNaN(n) ? 0 : n;
+  }
+
+  function getTasa(p){
+    return parseTasa(p.tasaBinance !== undefined ? p.tasaBinance : (p.tasa !== undefined ? p.tasa : p.tasaBinanceV));
+  }
+
+  function fmt(n, moneda){
+    const num = (Number(n) || 0).toLocaleString('es-VE', {minimumFractionDigits:2, maximumFractionDigits:2});
+    return moneda === 'Bs' ? ('Bs ' + num) : ('$' + num);
+  }
+
+  function mapMoneda(tipoPago){
+    return { Zelle:'USD', USD:'USD', Bs:'Bs', Binance:'USDT', Efectivo:'Efectivo' }[tipoPago] || tipoPago;
+  }
+
+  function renderKPIs(datos){
+    const grupos = { Bs:{monto:0,count:0}, USD:{monto:0,count:0}, USDT:{monto:0,count:0}, Efectivo:{monto:0,count:0} };
+    let bsEnUsd = 0;       // Bs convertidos a USD (monto / tasa Binance)
+    let bsSinTasa = 0;     // pagos en Bs sin tasa válida (no se pueden convertir)
+    
+    datos.forEach(p => {
+      const m = p.moneda || mapMoneda(p.tipoPago);
+      if(grupos[m]){ grupos[m].monto += parseMonto(p.monto); grupos[m].count += 1; }
+
+      if (m === 'Bs'){
+        const tasa = getTasa(p);
+        if (tasa > 0) bsEnUsd += parseMonto(p.monto) / tasa;
+        else bsSinTasa += 1;
+      }
+    });
+
+    document.getElementById('kpiBs').textContent = fmt(grupos.Bs.monto, 'Bs');
+    document.getElementById('kpiBsCount').textContent = grupos.Bs.count + ' pagos';
+    document.getElementById('kpiBsUsd').innerHTML =
+      '≈ ' + fmt(bsEnUsd, 'USD') + ' USD' +
+      '<small>Monto ÷ Tasa Binance' + (bsSinTasa ? ' · ' + bsSinTasa + ' sin tasa' : '') + '</small>';
+    
+    document.getElementById('kpiUsd').textContent = fmt(grupos.USD.monto, 'USD');
+    document.getElementById('kpiUsdCount').textContent = grupos.USD.count + ' pagos';
+    
+    document.getElementById('kpiUsdt').textContent = fmt(grupos.USDT.monto, 'USDT');
+    document.getElementById('kpiUsdtCount').textContent = grupos.USDT.count + ' pagos';
+    
+    document.getElementById('kpiEfectivo').textContent = fmt(grupos.Efectivo.monto, 'Efectivo');
+    document.getElementById('kpiEfectivoCount').textContent = grupos.Efectivo.count + ' pagos';
+    
+    document.getElementById('kpiTotal').textContent = datos.length;
+
+    const gruposConcepto = {
+      'Inicial':    {monto:0, count:0},
+      'Reserva':    {monto:0, count:0},
+      'Pago IVA':   {monto:0, count:0},
+      'Cuota viva': {monto:0, count:0}
+    };
+
+    datos.forEach(p => {
+      const c = p.conceptoPago;
+      if(gruposConcepto[c]){ gruposConcepto[c].monto += parseMonto(p.monto); gruposConcepto[c].count += 1; }
+    });
+
+    document.getElementById('kpiInicial').textContent = gruposConcepto['Inicial'].count;
+    document.getElementById('kpiInicialMonto').textContent = fmt(gruposConcepto['Inicial'].monto, 'USD');
+
+    document.getElementById('kpiReserva').textContent = gruposConcepto['Reserva'].count;
+    document.getElementById('kpiReservaMonto').textContent = fmt(gruposConcepto['Reserva'].monto, 'USD');
+
+    document.getElementById('kpiIva').textContent = gruposConcepto['Pago IVA'].count;
+    document.getElementById('kpiIvaMonto').textContent = fmt(gruposConcepto['Pago IVA'].monto, 'USD');
+
+    document.getElementById('kpiCuotaViva').textContent = gruposConcepto['Cuota viva'].count;
+    document.getElementById('kpiCuotaVivaMonto').textContent = fmt(gruposConcepto['Cuota viva'].monto, 'USD');
+  }
+
+  function formatFecha(iso){
+    if(!iso) return '—';
+    const partes = iso.split('-');
+    if(partes.length !== 3) return iso;
+    return `${partes[2]}/${partes[1]}/${partes[0]}`;
+  }
+
+  function renderTabla(datos){
+    const body = document.getElementById('tablaBody');
+    if(!datos.length){
+      body.innerHTML = '<tr><td colspan="7" class="empty">No hay pagos que coincidan con los filtros.</td></tr>';
+      return;
+    }
+    const ordenados = [...datos].sort((a,b) => {
+      const fa = a.fecha || a.fechaPago || '';
+      const fb = b.fecha || b.fechaPago || '';
+      return fb.localeCompare(fa);
+    });
+    
+    body.innerHTML = ordenados.map(p => {
+      const moneda = p.moneda || mapMoneda(p.tipoPago);
+      const fechaOriginal = p.fecha || p.fechaPago;
+      const nombreCli = p.cliente || p.nombre || '—';
+      const empresaStr = p.empresa || '—'; 
+      const fileUrl = p.comprobanteUrl || '#';
+      const fileTag = p.comprobanteUrl ? `<a class="link" href="${fileUrl}" target="_blank">Ver archivo</a>` : `<a class="link" href="#" onclick="return false;">${p.comprobante || 'Ver'}</a>`;
+      
+      return `
+      <tr>
+        <td>${formatFecha(fechaOriginal)}</td>
+        <td>${empresaStr}</td>
+        <td>${nombreCli}</td>
+        <td>${p.titular || '—'}</td>
+        <td><span class="pill ${moneda}">${moneda || '—'}</span></td>
+        <td>${fmt(parseMonto(p.monto), moneda)}</td>
+        <td>${fileTag}</td>
+      </tr>
+    `;
+    }).join('');
+  }
+
+  function renderCharts(datos){
+    if (typeof Chart === 'undefined') return;
+
+    const porFecha = {};
+    datos.forEach(p => {
+      const f = p.fecha || p.fechaPago || 'Sin fecha';
+      porFecha[f] = (porFecha[f] || 0) + parseMonto(p.monto);
+    });
+    const fechas = Object.keys(porFecha).sort();
+    
+    const elFecha = document.getElementById('chartFecha');
+    const ctx1 = elFecha.getContext('2d');
+    if(chartFecha) chartFecha.destroy();
+    
+    const gradient = ctx1.createLinearGradient(0,0,0,260);
+    gradient.addColorStop(0, 'rgba(42,212,255,.35)');
+    gradient.addColorStop(1, 'rgba(42,212,255,0)');
+
+    chartFecha = new Chart(ctx1, {
+      type:'line',
+      data:{ 
+        labels: fechas.map(formatFecha), 
+        datasets:[{ 
+          data: fechas.map(f => porFecha[f]),
+          borderColor: chartColors.cyan,
+          backgroundColor: gradient,
+          borderWidth:2.5,
+          fill:true,
+          tension:.35,
+          pointRadius:3,
+          pointBackgroundColor: chartColors.cyan,
+          pointBorderColor:'#04101f',
+          pointBorderWidth:2, 
+        }] 
+      },
+      options:{ 
+        responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } },
+        scales:{ 
+          x:{ grid:{ color:chartColors.grid }, ticks:{ color:chartColors.text, font:{ family:"'JetBrains Mono', monospace", size:10.5 } } }, 
+          y:{ beginAtZero:true, grid:{ color:chartColors.grid }, ticks:{ color:chartColors.text, font:{ family:"'JetBrains Mono', monospace", size:10.5 } } } 
+        } 
+      }
+    });
+
+    const grupos = { Bs:0, USD:0, USDT:0, Efectivo:0 };
+    datos.forEach(p => {
+      const m = p.moneda || mapMoneda(p.tipoPago);
+      if(grupos[m] !== undefined) grupos[m] += parseMonto(p.monto);
+    });
+
+    const ctx2 = document.getElementById('chartMoneda').getContext('2d');
+    if(chartMoneda) chartMoneda.destroy();
+    chartMoneda = new Chart(ctx2, {
+      type:'doughnut',
+      data:{ 
+        labels:['Bolívares','USD (Zelle/Transferencia)','USDT (Binance)','Efectivo'],
+        datasets:[{ 
+          data:[grupos.Bs, grupos.USD, grupos.USDT, grupos.Efectivo],
+          backgroundColor:[chartColors.blue, chartColors.green, chartColors.cyan, chartColors.amber], 
+          borderColor:'#0c1830', borderWidth:3, hoverOffset:6 
+        }] 
+      },
+      options:{ 
+        responsive:true, maintainAspectRatio:false, cutout:'68%',
+        plugins:{ legend:{ position:'bottom', labels:{ color:chartColors.text, boxWidth:10, boxHeight:10, font:{ family:"'Inter', sans-serif", size:11.5 } } } } 
+      }
+    });
+  }
+
+  function datosEjemplo(){
+    return [
+      { fecha:"2026-07-28", empresa:"Grupo Sur", cliente:"Clínica Vista Sur",   titular:"M. Herrera",  moneda:"USD",     monto:420.00,  comprobante:"#0912" },
+      { fecha:"2026-07-27", empresa:"Salud C.A", cliente:"Hospital Los Andes",  titular:"J. Fuenmayor",moneda:"Bs",      monto:15230.50,tasaBinance:38.10, comprobante:"#0911" },
+      { fecha:"2026-07-27", empresa:"Norte INC", cliente:"Centro Médico Norte", titular:"C. Salas",    moneda:"USDT",    monto:150.00,  comprobante:"#0910" },
+      { fecha:"2026-07-26", empresa:"Privado",   cliente:"Dra. Estrella Pino",  titular:"E. Pino",     moneda:"Efectivo",monto:80.00,   comprobante:"#0909" },
+      { fecha:"2026-07-25", empresa:"Grupo Sur", cliente:"Clínica Vista Sur",   titular:"M. Herrera",  moneda:"USD",     monto:210.00,  comprobante:"#0908" },
+      { fecha:"2026-07-24", empresa:"RM C.A.",   cliente:"Suministros RM",      titular:"R. Marín",    moneda:"Bs",      monto:8890.00, tasaBinance:37.80, comprobante:"#0907" },
+      { fecha:"2026-07-23", empresa:"Salud C.A", cliente:"Hospital Los Andes",  titular:"J. Fuenmayor",moneda:"USDT",    monto:300.00,  comprobante:"#0906" },
+      { fecha:"2026-07-22", empresa:"Norte INC", cliente:"Centro Médico Norte", titular:"C. Salas",    moneda:"Efectivo",monto:60.00,   comprobante:"#0905" },
+      { fecha:"2026-07-21", empresa:"Privado",   cliente:"Dra. Estrella Pino",  titular:"E. Pino",     moneda:"USD",     monto:135.00,  comprobante:"#0904" },
+      { fecha:"2026-07-20", empresa:"RM C.A.",   cliente:"Suministros RM",      titular:"R. Marín",    moneda:"Bs",      monto:5120.75, tasaBinance:37.50, comprobante:"#0903" },
+    ];
+  }
+</script>
+</body>
+</html>

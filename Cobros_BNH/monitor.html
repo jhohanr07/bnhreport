@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<base target="_top">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monitoreo · BNH Medical</title>
+<script src="gas-shim.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-adapter-date-fns/3.0.0/chartjs-adapter-date-fns.bundle.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --teal:#016589; --teal-dark:#014c68; --teal-light:#e6f0f3;
+    --green:#1ab895; --green-dark:#159473;
+    --gray:#6c6c6c; --gray-light:#f2f4f5; --bg:#eef3f4; --card:#ffffff;
+    --danger:#c0392b; --danger-bg:#fdecea; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh; background:
+      radial-gradient(1200px 600px at 15% -10%, var(--teal-light) 0%, transparent 55%),
+      radial-gradient(900px 500px at 110% 10%, #e5f8f3 0%, transparent 50%), var(--bg);
+    font-family:'Inter', -apple-system, sans-serif; color:#1f2a30; padding:28px 16px 60px;
+  }
+  .wrap{ max-width:960px; margin:0 auto; }
+  header{ display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:22px; }
+  h1{ font-family:'Manrope',sans-serif; font-weight:800; font-size:22px; color:var(--teal-dark); margin:0; }
+  .sub{ font-size:13px; color:var(--gray); margin-top:2px; }
+  .estado-pill{
+    display:inline-flex; align-items:center; gap:8px; padding:9px 16px; border-radius:999px;
+    font-weight:700; font-size:13.5px; font-family:'Manrope',sans-serif;
+  }
+  .estado-pill.ok{ background:#e7f9f2; color:var(--green-dark); border:1px solid #b6ecdb; }
+  .estado-pill.error{ background:var(--danger-bg); color:var(--danger); border:1px solid #f3c7c1; }
+  .estado-pill .dot{ width:9px; height:9px; border-radius:50%; background:currentColor; }
+  .acciones{ display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
+  button{
+    border:none; border-radius:10px; padding:10px 18px; font-weight:700; font-size:13.5px;
+    font-family:'Manrope',sans-serif; cursor:pointer; transition:transform .12s, opacity .12s;
+  }
+  button:hover{ transform:translateY(-1px); }
+  button:disabled{ opacity:.6; cursor:not-allowed; transform:none; }
+  #btnProbar{ background:linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%); color:#fff; }
+  #btnRefrescar{ background:#fff; color:var(--teal-dark); border:1.5px solid #dde5e8; }
+  .grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:14px; margin-bottom:22px; }
+  .card{
+    background:var(--card); border-radius:var(--radius); padding:18px 18px 16px;
+    box-shadow:0 1px 2px rgba(16,42,54,.04), 0 14px 30px -20px rgba(1,101,137,.3);
+    border:1px solid rgba(1,101,137,.08);
+  }
+  .card .nombre{ font-size:12.5px; font-weight:700; color:#33444c; margin-bottom:8px; }
+  .card .valor{ display:flex; align-items:center; gap:8px; font-family:'Manrope',sans-serif; font-weight:800; font-size:16px; }
+  .card .valor .dot{ width:10px; height:10px; border-radius:50%; }
+  .dot.ok{ background:var(--green); } .dot.error{ background:var(--danger); }
+  .card .detalle{ font-size:12px; color:var(--gray); margin-top:6px; line-height:1.4; }
+  .card .disp{ margin-top:10px; font-size:11.5px; color:var(--gray); }
+  .card .barra{ height:6px; border-radius:6px; background:var(--gray-light); margin-top:4px; overflow:hidden; }
+  .card .barra span{ display:block; height:100%; background:linear-gradient(90deg, var(--teal), var(--green)); }
+  .panel-chart{
+    background:var(--card); border-radius:var(--radius); padding:20px;
+    box-shadow:0 1px 2px rgba(16,42,54,.04), 0 14px 30px -20px rgba(1,101,137,.3);
+    border:1px solid rgba(1,101,137,.08); margin-bottom:22px;
+  }
+  .panel-chart h2{ font-family:'Manrope',sans-serif; font-size:15px; color:var(--teal-dark); margin:0 0 14px; }
+  .tabla-wrap{
+    background:var(--card); border-radius:var(--radius); padding:8px 0;
+    box-shadow:0 1px 2px rgba(16,42,54,.04), 0 14px 30px -20px rgba(1,101,137,.3);
+    border:1px solid rgba(1,101,137,.08); overflow:hidden;
+  }
+  .tabla-wrap h2{ font-family:'Manrope',sans-serif; font-size:15px; color:var(--teal-dark); margin:14px 18px; }
+  table{ width:100%; border-collapse:collapse; font-size:12.5px; }
+  th, td{ padding:9px 14px; text-align:left; border-bottom:1px solid #eef1f2; }
+  th{ color:var(--gray); font-weight:700; font-size:11.5px; text-transform:uppercase; letter-spacing:.03em; }
+  td.estado-ok{ color:var(--green-dark); font-weight:700; }
+  td.estado-error{ color:var(--danger); font-weight:700; }
+  .vacio{ text-align:center; padding:40px 20px; color:var(--gray); font-size:13.5px; }
+  .cargando{ text-align:center; padding:40px 20px; color:var(--gray); font-size:13.5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Monitoreo del sistema</h1>
+      <div class="sub">BNH Medical · Equipos &amp; Suministros</div>
+    </div>
+    <span id="estadoGeneral" class="estado-pill ok"><span class="dot"></span>Cargando…</span>
+  </header>
+
+  <div class="acciones">
+    <button id="btnProbar" onclick="probarAhora()">Probar ahora</button>
+    <button id="btnRefrescar" onclick="cargarDatos()">Actualizar</button>
+  </div>
+
+  <div id="contenido">
+    <div class="cargando">Cargando datos de monitoreo…</div>
+  </div>
+</div>
+
+<script>
+  let chart;
+
+  function cargarDatos(){
+    document.getElementById('btnRefrescar').disabled = true;
+    google.script.run
+      .withSuccessHandler(renderizar)
+      .withFailureHandler(err => {
+        document.getElementById('btnRefrescar').disabled = false;
+        document.getElementById('contenido').innerHTML =
+          '<div class="vacio">Error al cargar el monitoreo: ' + err.message + '</div>';
+      })
+      .obtenerDatosMonitoreo();
+  }
+
+  function probarAhora(){
+    const btn = document.getElementById('btnProbar');
+    btn.disabled = true; btn.textContent = 'Probando…';
+    google.script.run
+      .withSuccessHandler(datos => { btn.disabled = false; btn.textContent = 'Probar ahora'; renderizar(datos); })
+      .withFailureHandler(err => { btn.disabled = false; btn.textContent = 'Probar ahora'; alert('Error: ' + err.message); })
+      .ejecutarPruebaManualAhora();
+  }
+
+  function renderizar(datos){
+    document.getElementById('btnRefrescar').disabled = false;
+    const pill = document.getElementById('estadoGeneral');
+    const cont = document.getElementById('contenido');
+
+    if(datos.sinDatos){
+      pill.className = 'estado-pill ' + (datos.activo ? 'ok' : 'error');
+      pill.innerHTML = '<span class="dot"></span>' + (datos.activo ? 'Monitoreo activo · sin datos aún' : 'Monitoreo detenido');
+      cont.innerHTML = '<div class="vacio">Todavía no hay resultados registrados. Haz clic en "Probar ahora" para generar el primero.</div>';
+      return;
+    }
+
+    pill.className = 'estado-pill ' + (datos.estadoGeneral === 'OK' ? 'ok' : 'error');
+    pill.innerHTML = '<span class="dot"></span>' +
+      (datos.estadoGeneral === 'OK' ? 'Todo funcionando' : 'Se detectaron fallas') +
+      (datos.activo ? '' : ' · monitoreo detenido');
+
+    // Tarjetas por prueba
+    const nombres = Object.keys(datos.ultimoPorPrueba);
+    let tarjetas = '<div class="grid">';
+    nombres.forEach(nombre => {
+      const r = datos.ultimoPorPrueba[nombre];
+      const disp = datos.disponibilidad[nombre] != null ? datos.disponibilidad[nombre] : 100;
+      tarjetas += '<div class="card">' +
+        '<div class="nombre">' + nombre + '</div>' +
+        '<div class="valor"><span class="dot ' + (r.estado === 'OK' ? 'ok' : 'error') + '"></span>' + (r.estado === 'OK' ? 'OK' : 'ERROR') + '</div>' +
+        '<div class="detalle">' + r.detalle + '</div>' +
+        '<div class="disp">Disponibilidad reciente: ' + disp + '%</div>' +
+        '<div class="barra"><span style="width:' + disp + '%"></span></div>' +
+      '</div>';
+    });
+    tarjetas += '</div>';
+
+    // Gráfica de tiempos de respuesta
+    const graficaHtml = '<div class="panel-chart"><h2>Tiempo de respuesta (ms) · últimos ciclos</h2><canvas id="grafica" height="90"></canvas></div>';
+
+    // Tabla histórica (últimos 25)
+    const filasTabla = datos.historico.slice(-25).reverse().map(r => {
+      const fecha = new Date(r.fecha).toLocaleString('es-VE');
+      return '<tr><td>' + fecha + '</td><td>' + r.prueba + '</td>' +
+        '<td class="estado-' + (r.estado === 'OK' ? 'ok' : 'error') + '">' + r.estado + '</td>' +
+        '<td>' + r.detalle + '</td><td>' + r.ms + '</td></tr>';
+    }).join('');
+    const tablaHtml = '<div class="tabla-wrap"><h2>Historial reciente</h2><table>' +
+      '<thead><tr><th>Fecha/Hora</th><th>Prueba</th><th>Estado</th><th>Detalle</th><th>ms</th></tr></thead>' +
+      '<tbody>' + filasTabla + '</tbody></table></div>';
+
+    cont.innerHTML = tarjetas + graficaHtml + tablaHtml;
+
+    dibujarGrafica(datos.historico);
+  }
+
+  function dibujarGrafica(historico){
+    const ctx = document.getElementById('grafica');
+    if(!ctx) return;
+
+    const porPrueba = {};
+    historico.forEach(r => {
+      if(!porPrueba[r.prueba]) porPrueba[r.prueba] = [];
+      porPrueba[r.prueba].push({ x: new Date(r.fecha), y: r.ms });
+    });
+
+    const colores = ['#016589', '#1ab895', '#c0392b', '#f0ad4e', '#7c5cbf', '#0aa'];
+    const datasets = Object.keys(porPrueba).map((nombre, i) => ({
+      label: nombre,
+      data: porPrueba[nombre],
+      borderColor: colores[i % colores.length],
+      backgroundColor: 'transparent',
+      tension: .25,
+      pointRadius: 2
+    }));
+
+    if(chart) chart.destroy();
+    chart = new Chart(ctx, {
+      type: 'line',
+      data: { datasets },
+      options: {
+        responsive: true,
+        interaction: { mode: 'nearest', intersect: false },
+        scales: {
+          x: { type: 'time', time: { unit: 'hour' }, ticks: { font: { size: 10 } } },
+          y: { beginAtZero: true, title: { display: true, text: 'ms' } }
+        },
+        plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } }
+      }
+    });
+  }
+
+  cargarDatos();
+</script>
+</body>
+</html>

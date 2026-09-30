@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<base target="_top">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reporte de Pagos · BNH Medical</title>
+<script src="gas-shim.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --teal:        #016589;
+    --teal-dark:   #014c68;
+    --teal-light:  #e6f0f3;
+    --green:       #1ab895;
+    --green-dark:  #159473;
+    --gray:        #6c6c6c;
+    --gray-light:  #f2f4f5;
+    --bg:          #eef3f4;
+    --card:        #ffffff;
+    --danger:      #c0392b;
+    --danger-bg:   #fdecea;
+    --radius:      16px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    background:
+      radial-gradient(1200px 600px at 15% -10%, var(--teal-light) 0%, transparent 55%),
+      radial-gradient(900px 500px at 110% 10%, #e5f8f3 0%, transparent 50%),
+      var(--bg);
+    font-family:'Inter', -apple-system, sans-serif;
+    color:#1f2a30;
+    padding:32px 16px;
+  }
+  .wrap{ width:100%; max-width:460px; }
+  .brand{ display:flex; flex-direction:column; align-items:center; margin-bottom:22px; }
+  .brand img{ width:172px; height:auto; }
+  .brand svg{ width:172px; height:auto; }
+  .brand .tag{
+    margin-top:4px; font-size:12.5px; letter-spacing:.06em; color:var(--gray);
+    text-transform:uppercase; font-weight:600;
+  }
+  .card{
+    background:var(--card);
+    border-radius:var(--radius);
+    box-shadow:0 1px 2px rgba(16,42,54,.04), 0 20px 44px -22px rgba(1,101,137,.35);
+    border:1px solid rgba(1,101,137,.08);
+    overflow:hidden;
+  }
+  .card-accent{ height:6px; background:linear-gradient(90deg, var(--teal) 0%, var(--green) 100%); }
+  .card-body{ padding:30px 28px 28px; }
+  h1{
+    font-family:'Manrope', sans-serif; font-weight:800; font-size:22px;
+    color:var(--teal-dark); margin:0 0 4px;
+  }
+  .sub{ font-size:13.5px; color:var(--gray); margin:0 0 24px; line-height:1.5; }
+  label{
+    display:block; font-size:12.5px; font-weight:600; color:#33444c;
+    margin-bottom:6px; letter-spacing:.01em;
+  }
+  .field{ margin-bottom:16px; }
+  /* Fila de dos columnas para agrupar campos relacionados (Correo + Teléfono) */
+  .field-row{ display:flex; gap:12px; }
+  .field-row .field{ flex:1; min-width:0; }
+  input[type="text"], input[type="date"], input[type="number"], input[type="email"], input[type="tel"], select{
+    width:100%; padding:12px 14px; font-size:14.5px; font-family:inherit;
+    border:1.5px solid #dde5e8; border-radius:10px; background:#fbfcfd;
+    transition:border-color .15s, box-shadow .15s, background .15s;
+    color:#1f2a30;
+  }
+  input:focus, select:focus{
+    outline:none; border-color:var(--green); background:#fff;
+    box-shadow:0 0 0 4px rgba(26,184,149,.14);
+  }
+  select{ appearance:none; -webkit-appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='9'><path d='M1 1l6 6 6-6' stroke='%236c6c6c' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat:no-repeat; background-position:right 14px center; padding-right:36px;
+  }
+  .file-field{
+    border:1.5px dashed #cfdadd; border-radius:12px; padding:16px;
+    background:var(--gray-light); text-align:center; transition:border-color .15s, background .15s;
+  }
+  .file-field.has-file{ border-color:var(--green); background:#f0fbf8; }
+  .file-field input[type=file]{ display:none; }
+  .file-field label.trigger{
+    display:inline-flex; align-items:center; gap:8px; cursor:pointer;
+    background:#fff; border:1.5px solid #dde5e8; padding:9px 16px;
+    border-radius:9px; font-size:13px; font-weight:600; color:var(--teal-dark);
+    margin:0;
+  }
+  .file-field .hint{ margin-top:8px; font-size:11.5px; color:var(--gray); }
+  .file-field .filename{ margin-top:8px; font-size:12.5px; color:var(--green-dark); font-weight:600; word-break:break-all; }
+  button[type=submit]{
+    width:100%; margin-top:22px; padding:14px; border:none; border-radius:11px;
+    background:linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%);
+    color:#fff; font-size:15px; font-weight:700; font-family:'Manrope',sans-serif;
+    letter-spacing:.01em; cursor:pointer; display:flex; align-items:center;
+    justify-content:center; gap:10px; transition:transform .12s, box-shadow .12s, opacity .12s;
+    box-shadow:0 10px 24px -10px rgba(1,101,137,.55);
+  }
+  button[type=submit]:hover{ transform:translateY(-1px); box-shadow:0 14px 28px -10px rgba(1,101,137,.6); }
+  button[type=submit]:disabled{ opacity:.7; cursor:not-allowed; transform:none; }
+  .loader{
+    width:16px; height:16px; border:2px solid rgba(255,255,255,.5);
+    border-top-color:#fff; border-radius:50%; animation:spin .8s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  #mensaje{ display:none; margin-bottom:18px; padding:13px 14px; border-radius:10px; font-size:13.5px; text-align:center; font-weight:600; }
+  #mensaje.exito{ display:block; background:#e7f9f2; color:var(--green-dark); border:1px solid #b6ecdb; }
+  #mensaje.error{ display:block; background:var(--danger-bg); color:var(--danger); border:1px solid #f3c7c1; }
+  footer{ text-align:center; margin-top:22px; font-size:11.5px; color:var(--gray); line-height:1.6; }
+  footer a{ color:var(--teal); font-weight:700; text-decoration:none; }
+  footer a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body>
+
+  <div class="wrap">
+    <div class="brand">
+      <!-- === INICIO CONTENEDOR FLEX PARA LOS DOS LOGOS === -->
+      <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+        <svg width="172" viewBox="0 0 320 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="BNH Medical">
+          <g transform="translate(10, 0)">
+            <!-- Cruz Médica Verde -->
+            <rect x="0" y="32" width="48" height="16" fill="#00BFA5" rx="2"/>
+            <rect x="16" y="16" width="16" height="48" fill="#00BFA5" rx="2"/>
+
+            <!-- Texto Principal "BNH" -->
+            <text x="60" y="56" fill="#00567C" font-size="64" font-weight="bold">BNH</text>
+
+            <!-- Texto "MEDICAL" -->
+            <text x="160" y="88" fill="#00567C" font-size="28" font-weight="bold" text-anchor="middle" letter-spacing="1">MEDICAL</text>
+
+            <!-- Línea Divisoria -->
+            <line x1="80" y1="100" x2="240" y2="100" stroke="#00567C" stroke-width="1"/>
+
+            <!-- Texto "Equipos & Suministros" -->
+            <text x="160" y="120" fill="#606060" font-size="16" text-anchor="middle" font-weight="300">Equipos &amp; Suministros</text>
+          </g>
+        </svg>
+        <!-- Estilos en línea para evitar la regla global .brand img y prevenir distorsión -->
+        <img src="https://i.postimg.cc/bNTF47HF/vivaquota-logo-HD-transparente.png" alt="Logo Adicional" style="width: auto; height: 90px; object-fit: contain;">
+      </div>
+      <!-- === FIN CONTENEDOR === -->
+      <span class="tag">Equipos &amp; Suministros</span>
+    </div>
+
+    <div class="card">
+      <div class="card-accent"></div>
+      <div class="card-body">
+        <h1>Reporte de pago</h1>
+        <p class="sub">Registra los datos de tu transferencia y adjunta el comprobante. Validaremos tu pago a la brevedad.</p>
+
+        <div id="mensaje"></div>
+
+        <form id="pagoForm" onsubmit="enviarFormulario(event)" novalidate>
+
+          <div class="field">
+            <label for="nombre">Nombre o razón social</label>
+            <input type="text" id="nombre" required autocomplete="name" placeholder="Ej. Comercial Salud C.A.">
+          </div>
+
+          <div class="field">
+            <label for="fechaPago">Fecha del pago</label>
+            <input type="date" id="fechaPago" required>
+          </div>
+
+          <!-- === Concepto de pago === -->
+          <div class="field">
+            <label for="conceptoPago">Concepto de pago</label>
+            <select id="conceptoPago" name="conceptoPago" required>
+              <option value="" disabled selected>Selecciona una opción</option>
+              <option value="Inicial">Inicial</option>
+              <option value="Reserva">Reserva</option>
+              <option value="Pago IVA">Pago IVA</option>
+              <option value="Cuota viva">Cuota viva</option>
+            </select>
+          </div>
+          <!-- === FIN === -->
+
+          <!-- === NUEVO: Vendedor, visible solo si Concepto = Inicial/Reserva === -->
+          <div class="field" id="vendedorField" style="display:none;">
+            <label for="vendedor">Vendedor</label>
+            <select id="vendedor" name="vendedor">
+              <option value="" disabled selected>Selecciona un vendedor</option>
+            </select>
+          </div>
+          <!-- === FIN NUEVO === -->
+
+          <div class="field">
+            <label for="tipoPago">Método de pago</label>
+            <select id="tipoPago" required>
+              <option value="" disabled selected>Selecciona una opción</option>
+              <option value="USD" data-moneda="USD">Depositos / Transferencia (USD)</option>
+              <option value="Zelle" data-moneda="USD">Zelle (USD)</option>
+              <option value="Efectivo" data-moneda="Efectivo">Efectivo (USD)</option>
+              <option value="Bs" data-moneda="Bs">Bs · Transferencia / Pago Móvil</option>
+              <option value="Binance" data-moneda="USDT">Binance (USDT)</option>
+            </select>
+          </div>
+
+          <!-- === Campo "Monto", visible solo cuando el método de pago es "Efectivo" === -->
+          <div class="field" id="montoField" style="display:none;">
+            <label for="monto">Monto</label>
+            <input type="number" id="monto" name="monto" min="0" step="0.01" inputmode="decimal" placeholder="Ej. 150.00">
+          </div>
+          <!-- === FIN === -->
+
+          <div class="field">
+            <label for="titular" id="labelTitular">Selecciona un método de pago</label>
+            <input type="text" id="titular" required placeholder="Ej. Juan Pérez">
+          </div>
+
+          <!-- === Correo y Teléfono agrupados lado a lado === -->
+          <div class="field-row">
+            <div class="field">
+              <label for="correo">Correo electrónico cliente</label>
+              <input type="email" id="correo" required autocomplete="email" placeholder="ejemplo@correo.com">
+            </div>
+
+            <div class="field">
+              <label for="telefono">Teléfono</label>
+              <input type="tel" id="telefono" required autocomplete="tel"
+                     placeholder="+584121234567"
+                     pattern="^\+58\d{10}$"
+                     maxlength="13"
+                     title="Formato: 58 + código de ciudad/operadora + número. Ej: +584121234567">
+            </div>
+          </div>
+          <!-- === FIN === -->
+
+          <div class="field">
+            <label>Soporte de pago</label>
+            <div class="file-field" id="fileField">
+              <label class="trigger" for="comprobante">
+                Elegir archivo
+              </label>
+              <input type="file" id="comprobante" accept="image/jpeg, image/png, image/jpg, application/pdf" multiple onchange="mostrarArchivo(this)">
+              <p class="hint">JPG, PNG o PDF · Hasta 5 archivos · 5MB c/u</p>
+              <p class="filename" id="filename" style="display:none;"></p>
+            </div>
+          </div>
+
+          <!-- === NUEVO: RIF, visible solo si Concepto = Inicial/Reserva === -->
+          <div class="field" id="rifField" style="display:none;">
+            <label>RIF</label>
+            <div class="file-field" id="rifFileField">
+              <label class="trigger" for="rif">
+                Elegir archivo
+              </label>
+              <input type="file" id="rif" accept="image/jpeg, image/png, image/jpg, application/pdf" onchange="mostrarArchivoRif(this)">
+              <p class="hint">JPG, PNG o PDF · 5MB máx.</p>
+              <p class="filename" id="rifFilename" style="display:none;"></p>
+            </div>
+          </div>
+          <!-- === FIN NUEVO === -->
+
+          <button type="submit" id="btnSubmit">
+            <span id="btnText">Enviar Pago</span>
+            <div id="btnLoader" class="loader" style="display:none;"></div>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <footer>
+      BNH Medical · Equipos &amp; Suministros<br>
+      Cualquier error por favor haz clic <a href="https://wa.me/584126821281" target="_blank" rel="noopener noreferrer">aquí</a>
+    </footer>
+  </div>
+
+<script>
+  /* ===========================================================
+     LÓGICA CONDICIONAL: etiqueta dinámica según método de pago
+     - Zelle / Binance  -> "Titular de la cuenta de origen"
+     - Bs / Efectivo    -> "¿Quién recibe?"
+     - Sin selección    -> texto por defecto
+     =========================================================== */
+  const ETIQUETAS_TITULAR = {
+    USD:      'Titular de la cuenta de origen',
+    Zelle:    'Titular de la cuenta de origen',
+    Binance:  'Titular de la cuenta de origen',
+    Bs:       '¿Quién recibe?',
+    Efectivo: '¿Quién recibe?'
+  };
+
+  const TEXTO_POR_DEFECTO = 'Selecciona un método de pago';
+
+  function actualizarEtiquetaTitular(){
+    const select = document.getElementById('tipoPago');
+    const label  = document.getElementById('labelTitular');
+    const valor  = select.value;
+
+    // Sin selección válida -> estado por defecto
+    if (!valor || !ETIQUETAS_TITULAR[valor]) {
+      label.textContent = TEXTO_POR_DEFECTO;
+      return;
+    }
+
+    // Actualización en tiempo real (evento change)
+    label.textContent = ETIQUETAS_TITULAR[valor];
+  }
+
+  /* ===========================================================
+     Campo dinámico "Monto"
+     - Se muestra únicamente cuando tipoPago === 'Efectivo'
+     - Se hace 'required' solo cuando está visible
+     - Al cambiar a otro método, se oculta y se limpia su valor
+       para no enviar datos erróneos al backend
+     =========================================================== */
+  function toggleMontoField(){
+    const select      = document.getElementById('tipoPago');
+    const montoField  = document.getElementById('montoField');
+    const montoInput  = document.getElementById('monto');
+
+    if (select.value === 'Efectivo') {
+      montoField.style.display = 'block';
+      montoInput.required = true;
+    } else {
+      montoField.style.display = 'none';
+      montoInput.required = false;
+      montoInput.value = ''; // reinicia el valor para evitar datos erróneos
+    }
+  }
+
+  // Se dispara cada vez que el usuario cambia el método de pago
+  document.getElementById('tipoPago').addEventListener('change', actualizarEtiquetaTitular);
+  document.getElementById('tipoPago').addEventListener('change', toggleMontoField);
+
+  // Estado inicial al cargar la página
+  document.addEventListener('DOMContentLoaded', actualizarEtiquetaTitular);
+  document.addEventListener('DOMContentLoaded', toggleMontoField);
+
+  /* ===========================================================
+     NUEVO: Campo "Vendedor" — visible solo para Inicial/Reserva
+     =========================================================== */
+  const CONCEPTOS_QUE_REQUIEREN_VENDEDOR = ['Inicial', 'Reserva'];
+
+  function toggleVendedorField(){
+    const conceptoSelect = document.getElementById('conceptoPago');
+    const vendedorField  = document.getElementById('vendedorField');
+    const vendedorSelect = document.getElementById('vendedor');
+
+    if (CONCEPTOS_QUE_REQUIEREN_VENDEDOR.includes(conceptoSelect.value)) {
+      vendedorField.style.display = 'block';
+      vendedorSelect.required = true;
+    } else {
+      vendedorField.style.display = 'none';
+      vendedorSelect.required = false;
+      vendedorSelect.value = '';
+    }
+  }
+
+  document.getElementById('conceptoPago').addEventListener('change', toggleVendedorField);
+  document.addEventListener('DOMContentLoaded', toggleVendedorField);
+
+  /* ===========================================================
+     NUEVO: Campo "RIF" — visible solo para Inicial/Reserva
+     (mismo criterio que Vendedor)
+     =========================================================== */
+  const CONCEPTOS_QUE_REQUIEREN_RIF = ['Inicial', 'Reserva'];
+
+  function toggleRifField(){
+    const conceptoSelect = document.getElementById('conceptoPago');
+    const rifField = document.getElementById('rifField');
+    const rifInput = document.getElementById('rif');
+
+    if (CONCEPTOS_QUE_REQUIEREN_RIF.includes(conceptoSelect.value)) {
+      rifField.style.display = 'block';
+    } else {
+      rifField.style.display = 'none';
+      rifInput.value = '';
+      document.getElementById('rifFileField').classList.remove('has-file');
+      document.getElementById('rifFilename').style.display = 'none';
+    }
+  }
+
+  document.getElementById('conceptoPago').addEventListener('change', toggleRifField);
+  document.addEventListener('DOMContentLoaded', toggleRifField);
+
+  function mostrarArchivoRif(input){
+    const field = document.getElementById('rifFileField');
+    const fname = document.getElementById('rifFilename');
+
+    if (input.files && input.files.length > 0){
+      field.classList.add('has-file');
+      fname.style.display = 'block';
+      fname.textContent = input.files[0].name;
+    } else {
+      field.classList.remove('has-file');
+      fname.style.display = 'none';
+    }
+  }
+
+  /* ===========================================================
+     NUEVO: Carga dinámica de vendedores desde Sheets
+     (hoja "VENDEDORES", columna B, filas 2-50)
+     =========================================================== */
+  function cargarVendedores(){
+    if (typeof google === 'undefined' || !google.script) return;
+
+    google.script.run
+      .withSuccessHandler(function(lista){
+        const select = document.getElementById('vendedor');
+        (lista || []).forEach(function(nombre){
+          const opt = document.createElement('option');
+          opt.value = nombre;
+          opt.textContent = nombre;
+          select.appendChild(opt);
+        });
+      })
+      .withFailureHandler(function(err){
+        console.error('Error al cargar vendedores:', err);
+      })
+      .obtenerVendedores();
+  }
+  document.addEventListener('DOMContentLoaded', cargarVendedores);
+
+  function mostrarArchivo(input){
+    const field = document.getElementById('fileField');
+    const fname = document.getElementById('filename');
+    const cantidad = input.files ? input.files.length : 0;
+
+    if(cantidad > 0){
+      field.classList.add('has-file');
+      fname.style.display = 'block';
+      if(cantidad === 1){
+        fname.textContent = input.files[0].name;
+      } else {
+        // Varios archivos: se muestra el conteo y la lista de nombres
+        const nombres = Array.from(input.files).map(f => f.name).join(', ');
+        fname.textContent = cantidad + ' archivos seleccionados: ' + nombres;
+      }
+    } else {
+      field.classList.remove('has-file');
+      fname.style.display = 'none';
+    }
+  }
+
+  /* Lee un único archivo del navegador y lo convierte a base64 (Promise) */
+  function leerArchivoComoBase64(file){
+    return new Promise(function(resolve, reject){
+      const reader = new FileReader();
+      reader.onload = function(evento){
+        resolve({ nombreArchivo: file.name, archivoBase64: evento.target.result });
+      };
+      reader.onerror = function(){
+        reject(new Error('No se pudo leer el archivo "' + file.name + '".'));
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function mostrarMensaje(texto, tipo){
+    const msj = document.getElementById('mensaje');
+    msj.textContent = texto;
+    msj.className = tipo;
+    msj.scrollIntoView({ behavior:'smooth', block:'center' });
+  }
+
+  function setCargando(estado){
+    const btn = document.getElementById('btnSubmit');
+    const texto = document.getElementById('btnText');
+    const loader = document.getElementById('btnLoader');
+    btn.disabled = estado;
+    texto.textContent = estado ? 'Procesando...' : 'Enviar Pago';
+    loader.style.display = estado ? 'inline-block' : 'none';
+  }
+
+  /* ===========================================================
+     NUEVO: Validación estricta — revisa todos los campos
+     obligatorios (incluyendo Vendedor si está activo) y devuelve
+     la lista de etiquetas de los que faltan por completar.
+     =========================================================== */
+  function obtenerCamposFaltantes(){
+    const faltantes = [];
+
+    const campos = [
+      { id: 'nombre',       label: 'Nombre o razón social' },
+      { id: 'fechaPago',    label: 'Fecha del pago' },
+      { id: 'conceptoPago', label: 'Concepto de pago' },
+      { id: 'tipoPago',     label: 'Método de pago' },
+      { id: 'titular',      label: document.getElementById('labelTitular').textContent },
+      { id: 'correo',       label: 'Correo electrónico' },
+      { id: 'telefono',     label: 'Teléfono' }
+    ];
+
+    campos.forEach(function(campo){
+      const el = document.getElementById(campo.id);
+      if (!el.value || !el.value.trim()) faltantes.push(campo.label);
+    });
+
+    // Monto manual, solo si el campo está visible/requerido (pago Efectivo)
+    const montoInput = document.getElementById('monto');
+    if (montoInput.required && (!montoInput.value || Number(montoInput.value) <= 0)) {
+      faltantes.push('Monto (pago en efectivo)');
+    }
+
+    // Vendedor, solo si el campo está visible/requerido (Inicial/Reserva)
+    const vendedorSelect = document.getElementById('vendedor');
+    if (vendedorSelect.required && !vendedorSelect.value) {
+      faltantes.push('Vendedor');
+    }
+
+    // RIF, solo si el campo está visible (Inicial/Reserva)
+    const rifField = document.getElementById('rifField');
+    const rifInput = document.getElementById('rif');
+    if (rifField.style.display !== 'none' && (!rifInput.files || rifInput.files.length === 0)) {
+      faltantes.push('RIF');
+    }
+
+    // Comprobante de pago
+    const fileInput = document.getElementById('comprobante');
+    if (!fileInput.files || fileInput.files.length === 0) {
+      faltantes.push('Soporte de pago (comprobante)');
+    }
+
+    return faltantes;
+  }
+
+  function enviarFormulario(e){
+    e.preventDefault();
+    document.getElementById('mensaje').className = '';
+
+    // NUEVO: validación estricta de todos los campos obligatorios.
+    // Si falta algo, se muestra la lista completa y no se envía nada.
+    const camposFaltantes = obtenerCamposFaltantes();
+    if (camposFaltantes.length > 0) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Faltan datos por completar',
+        html: 'Por favor completa los siguientes campos:<br><br>• ' + camposFaltantes.join('<br>• '),
+        confirmButtonColor: '#016589',
+        confirmButtonText: 'Entendido'
+      });
+      return;
+    }
+
+    const fileInput = document.getElementById('comprobante');
+    const file = fileInput.files[0];
+
+    if(file.size > 25 * 1024 * 1024){
+      mostrarMensaje('El archivo es demasiado grande. El máximo permitido es 25MB.', 'error');
+      return;
+    }
+
+    // Validación básica del formato del teléfono antes de enviar
+    const telefonoInput = document.getElementById('telefono');
+    const telefonoRegex = /^\+58\d{10}$/;
+    if(!telefonoRegex.test(telefonoInput.value.trim())){
+      mostrarMensaje('El teléfono debe tener el formato +58 seguido del código y número (Ej: +584121234567).', 'error');
+      telefonoInput.focus();
+      return;
+    }
+
+    const selMoneda = document.getElementById('tipoPago');
+    const moneda = selMoneda.options[selMoneda.selectedIndex]
+      ? selMoneda.options[selMoneda.selectedIndex].getAttribute('data-moneda')
+      : '';
+
+    // NUEVO: si el campo RIF está visible (Inicial/Reserva), se lee también
+    // ese archivo en base64 junto con el comprobante, usando Promise.all
+    // para no anidar FileReaders.
+    const rifInput = document.getElementById('rif');
+    const rifVisible = document.getElementById('rifField').style.display !== 'none';
+    const rifFile = rifVisible && rifInput.files && rifInput.files[0] ? rifInput.files[0] : null;
+
+    setCargando(true);
+
+    const lecturas = [ leerArchivoComoBase64(file) ];
+    if (rifFile) lecturas.push(leerArchivoComoBase64(rifFile));
+
+    Promise.all(lecturas)
+      .then(function(resultados){
+        const comprobanteLeido = resultados[0];
+        const rifLeido = resultados[1]; // undefined si no había RIF
+
+        const formData = {
+          nombre: document.getElementById('nombre').value,
+          fechaPago: document.getElementById('fechaPago').value,
+          conceptoPago: document.getElementById('conceptoPago').value,
+          tipoPago: document.getElementById('tipoPago').value,
+          moneda: moneda,
+          // Se usa 'montoManual' para el monto ingresado manualmente en pagos en Efectivo
+          montoManual: document.getElementById('monto').value,
+          titular: document.getElementById('titular').value,
+          correo: document.getElementById('correo').value,
+          telefono: telefonoInput.value.trim(),
+          vendedor: document.getElementById('vendedor').value,
+          nombreArchivo: comprobanteLeido.nombreArchivo,
+          archivoBase64: comprobanteLeido.archivoBase64,
+          // NUEVO: RIF (solo presente cuando Concepto = Inicial/Reserva)
+          nombreArchivoRif: rifLeido ? rifLeido.nombreArchivo : '',
+          archivoRifBase64: rifLeido ? rifLeido.archivoBase64 : ''
+        };
+
+        if (typeof google !== 'undefined' && google.script){
+          google.script.run
+            .withSuccessHandler(onSuccess)
+            .withFailureHandler(onError)
+            .procesarFormulario(formData);
+        } else {
+          setTimeout(() => onSuccess({success:true}), 1500);
+        }
+      })
+      .catch(function(){
+        setCargando(false);
+        mostrarMensaje('Error al leer el archivo. Intenta de nuevo.', 'error');
+      });
+  }
+
+  function onSuccess(respuesta){
+  setCargando(false);
+
+  // === PAGO DUPLICADO: no se guardó nada, se debe alertar ===
+  if (respuesta.duplicado) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Pago duplicado',
+      text: 'Error: Pago duplicado. La referencia N° ' + respuesta.referencia + ' ya fue registrada previamente.',
+      confirmButtonColor: '#016589',
+      confirmButtonText: 'Entendido'
+    });
+    mostrarMensaje('Este comprobante ya fue reportado anteriormente (Ref. ' + respuesta.referencia + ').', 'error');
+    return;
+  }
+
+  if(respuesta.success){
+    document.getElementById('pagoForm').reset();
+    document.getElementById('fileField').classList.remove('has-file');
+    document.getElementById('filename').style.display = 'none';
+    actualizarEtiquetaTitular();
+    toggleMontoField();
+    toggleVendedorField();
+    toggleRifField();
+    mostrarMensaje('¡Pago reportado con éxito! Hemos guardado tu comprobante.', 'exito');
+  } else {
+    mostrarMensaje('Ocurrió un error al guardar: ' + respuesta.error, 'error');
+  }
+}
+
+  function onError(error){
+    setCargando(false);
+    mostrarMensaje('Hubo un problema de conexión. Intenta nuevamente.', 'error');
+  }
+</script>
+</body>
+</html>
